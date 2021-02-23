@@ -1,0 +1,31 @@
+#
+# package: github.com/fuyibing/cache
+# template: redis cache configuration
+#
+# [addr]
+# [database]
+# [idle-timeout] 连结空闲指定时长后关闭
+# [keep-alive] 长连接保持时长.
+# [max-active] 最大连接数.
+# [max-idle] 最大空闲连接数.
+# [max-lifetime] 最大空闲连接数.
+# [network]
+# [password]
+# [timeout]
+# [read-timeout]
+# [wait]
+# [write-timeout]
+#
+addr: "127.0.0.1:6379"
+database: 0
+idle-timeout: 30
+keep-alive: 60
+max-active: 128
+max-idle: 4
+max-lifetime: 60
+network: "tcp"
+password: ""
+timeout: 0
+read-timeout: 0
+wait: false
+write-timeout: 0
