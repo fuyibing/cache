@@ -21,11 +21,11 @@ database: 0
 idle-timeout: 30
 keep-alive: 60
 max-active: 128
-max-idle: 4
+max-idle: 16
 max-lifetime: 60
 network: "tcp"
 password: ""
 timeout: 0
 read-timeout: 0
-wait: false
+wait: true
 write-timeout: 0

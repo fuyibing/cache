@@ -51,42 +51,48 @@ func (o *client) Do(ctx interface{}, cmd string, args ...interface{}) (res Respo
 
 // Run command.
 func (o *client) do(ctx interface{}, cmd string, args ...interface{}) (res Response, err error) {
-	t := time.Now()
-	// 1. defer detect.
+	// 1. Panic.
 	defer func() {
-		d := time.Now().Sub(t).Seconds()
 		if r := recover(); r != nil {
-			err = errors.New(fmt.Sprintf("%v", r))
-			log.Errorfc(ctx, "[cache][d=%f] run %s command got fatal error with arguments: %v: %v.", d, cmd, args, err)
-		} else {
-			if err != nil {
-				log.Errorfc(ctx, "[cache][d=%f] run %s command error with arguments: %v: %v.", d, cmd, args, err)
-			} else {
-				log.Infofc(ctx, "[cache][d=%f] run %s command completed with arguments: %v.", d, cmd, args)
-			}
+			log.Errorfc(ctx, "[cache] fatal error: %v.", r)
 		}
 	}()
-	// 2. Pool manager.
+	// 2. Connection.
+	//    Acquire from pool before command and
+	//    release when completed.
+	t0 := time.Now()
+	connection := Config.Pool().Get()
 	if log.Config.DebugOn() {
-		log.Debugfc(ctx, "[cache] acquire connection from pool.")
+		log.Debugfc(ctx, "[cache][d=%f] connection acquired from pool.", time.Now().Sub(t0).Seconds())
 	}
-	c := Config.Pool().Get()
 	defer func() {
-		if x := c.Close(); x != nil {
-			log.Warnfc(ctx, "[cache] release connection error: %v.", x)
+		if e0 := connection.Close(); e0 != nil {
+			log.Errorfc(ctx, "[cache] release connection error: %v.", e0)
 		} else {
 			if log.Config.DebugOn() {
 				log.Debugfc(ctx, "[cache] release connection to pool.")
 			}
 		}
 	}()
-	// 3. Send redis command.
+	// 3. Command.
+	//    Send redis command with arguments to server and
+	//    generate response struct.
+	t1 := time.Now()
+	defer func() {
+		d1 := time.Now().Sub(t1).Seconds()
+		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%v", r))
+		}
+		if err != nil {
+			log.Errorfc(ctx, "[cache][d=%f] send command error: %s %v: %s.", d1, cmd, args, err)
+		} else {
+			log.Infofc(ctx, "[cache][d=%f] send command completed: %s %v.", d1, cmd, args)
+		}
+	}()
+	// 3.1 Send commend.
 	var v interface{}
-	if v, err = c.Do(cmd, args...); err != nil {
-		return
+	if v, err = connection.Do(cmd, args...); err == nil {
+		res = &response{v: v}
 	}
-	// 4. completed command.
-	return &response{
-		v: v,
-	}, nil
+	return
 }
