@@ -64,11 +64,7 @@ func (o *configuration) initialize() {
 
 // Reset connection settings.
 func (o *configuration) reset() {
-	o.pool = &redis.Pool{
-		MaxActive: o.MaxActive,
-		MaxIdle:   o.MaxIdle,
-		Wait:      o.Wait,
-	}
+	o.pool = &redis.Pool{MaxActive: o.MaxActive, MaxIdle: o.MaxIdle, Wait: o.Wait}
 	// lifetime
 	if o.MaxLifetime > 0 {
 		o.pool.MaxConnLifetime = time.Duration(o.MaxLifetime) * time.Second
