@@ -1,4 +1,4 @@
-# log
+# config from github.com/fuyibing/framework-iris
 addr: :8888
 name: lib.cache
 version: 1.0.0

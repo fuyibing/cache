@@ -29,14 +29,29 @@ type LockInterface interface {
 
 // Redis command client.
 type ClientInterface interface {
+	// Decrement 1.
+	Decr(ctx interface{}, key string) (Response, error)
+
+	// Decrement with step.
+	DecrBy(ctx interface{}, key string, step int) (Response, error)
+
 	// Delete key.
 	Del(ctx interface{}, keys ...interface{}) (Response, error)
+
+	// Do any command with specified arguments.
+	Do(ctx interface{}, cmd string, args ...interface{}) (res Response, err error)
 
 	// Set expiration lifetime.
 	Expire(ctx interface{}, key string, seconds int) (Response, error)
 
 	// Read key.
 	Get(ctx interface{}, key string) (Response, error)
+
+	// Increment with 1.
+	Incr(ctx interface{}, key string) (Response, error)
+
+	// Increment with step.
+	IncrBy(ctx interface{}, key string, step int) (Response, error)
 
 	// Set key without lifetime.
 	Set(ctx interface{}, key string, value interface{}) (Response, error)
@@ -62,6 +77,12 @@ type Response interface {
 
 	// Return value is equal to specified string.
 	EqString(string) bool
+
+	// Return int value.
+	Int() int
+
+	// Return int64 value.
+	Int64() int64
 
 	// Return value is nil.
 	IsNil() bool

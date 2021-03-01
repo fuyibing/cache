@@ -44,6 +44,38 @@ func (o *response) EqString(str string) bool {
 	return false
 }
 
+func (o *response) Int() int {
+	if o.v != nil {
+		if t := o.t(); t != nil {
+			switch t.Kind() {
+			case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int32, reflect.Int64:
+				return o.v.(int)
+			case reflect.String:
+				if n, err := strconv.ParseInt(o.v.(string), 0, 64); err == nil {
+					return int(n)
+				}
+			}
+		}
+	}
+	return 0
+}
+
+func (o *response) Int64() int64 {
+	if o.v != nil {
+		if t := o.t(); t != nil {
+			switch t.Kind() {
+			case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int32, reflect.Int64:
+				return o.v.(int64)
+			case reflect.String:
+				if n, err := strconv.ParseInt(o.v.(string), 0, 64); err == nil {
+					return int64(n)
+				}
+			}
+		}
+	}
+	return 0
+}
+
 // Return value is nil.
 func (o *response) IsNil() bool {
 	return o.v == nil

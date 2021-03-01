@@ -1,6 +1,5 @@
 #
 # package: github.com/fuyibing/cache
-# template: redis cache configuration
 #
 # [addr]
 # [database]

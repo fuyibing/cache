@@ -31,8 +31,8 @@ func TestFuncDel(t *testing.T) {
 		t.Errorf("error: %v.", err)
 	} else {
 		// if res.EqString("name") {
-			t.Logf("type: %v", res.Type().String())
-			t.Logf("succeed: %v", res.Value())
+		t.Logf("type: %v", res.Type().String())
+		t.Logf("succeed: %v", res.Value())
 		// } else {
 		// 	t.Logf("failed: %s", res.Value())
 		// }
@@ -81,4 +81,19 @@ func TestFuncSetNxEx(t *testing.T) {
 	}
 
 	time.Sleep(time.Second)
+}
+
+func TestFuncInre(t *testing.T) {
+
+	r1, _ := cache.Client.Incr(nil, "test-1")
+	t.Logf("r1.value: %v == 1.", r1.Int64())
+
+	r2, _ := cache.Client.IncrBy(nil, "test-1", 3)
+	t.Logf("r2.value: %v == 4.", r2.Int64())
+
+	r3, _ := cache.Client.Decr(nil, "test-1")
+	t.Logf("r3.value: %v == 3.", r3.Int64())
+
+	r4, _ := cache.Client.DecrBy(nil, "test-1", 3)
+	t.Logf("r4.value: %v == 0.", r4.Int64())
 }
