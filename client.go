@@ -14,6 +14,14 @@ import (
 // Redis command client.
 type client struct{}
 
+func (o *client) Decr(ctx interface{}, key string) (Response, error) {
+	return o.Do(ctx, "DECR", key)
+}
+
+func (o *client) DecrBy(ctx interface{}, key string, step int) (Response, error) {
+	return o.Do(ctx, "DECRBY", key, step)
+}
+
 // Delete key.
 func (o *client) Del(ctx interface{}, keys ...interface{}) (Response, error) {
 	return o.do(ctx, "DEL", keys...)
@@ -27,6 +35,14 @@ func (o *client) Expire(ctx interface{}, key string, seconds int) (Response, err
 // Read key.
 func (o *client) Get(ctx interface{}, key string) (Response, error) {
 	return o.do(ctx, "GET", key)
+}
+
+func (o *client) Incr(ctx interface{}, key string) (Response, error) {
+	return o.Do(ctx, "INCR", key)
+}
+
+func (o *client) IncrBy(ctx interface{}, key string, step int) (Response, error) {
+	return o.Do(ctx, "INCRBY", key, step)
 }
 
 // Set key without lifetime.
