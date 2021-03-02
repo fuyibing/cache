@@ -90,6 +90,9 @@ type Response interface {
 	// Return value is "OK" string.
 	IsOk() bool
 
+	// Return string for any response.
+	String() string
+
 	// Return reflection type.
 	Type() reflect.Type
 
