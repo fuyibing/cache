@@ -49,7 +49,9 @@ func (o *response) Int() int {
 		if t := o.t(); t != nil {
 			switch t.Kind() {
 			case reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Int, reflect.Int32, reflect.Int64:
-				return o.v.(int)
+				if n, err := strconv.ParseInt(fmt.Sprintf("%v", o.v), 0, 32); err == nil {
+					return int(n)
+				}
 			case reflect.String:
 				if n, err := strconv.ParseInt(o.v.(string), 0, 64); err == nil {
 					return int(n)
@@ -84,6 +86,11 @@ func (o *response) IsNil() bool {
 // Return value is "OK" string.
 func (o *response) IsOk() bool {
 	return o.EqString("OK")
+}
+
+// Return string for value.
+func (o *response) String() string {
+	return fmt.Sprintf("%v", o.v)
 }
 
 // Return reflection type.

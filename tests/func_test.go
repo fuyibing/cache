@@ -4,6 +4,7 @@
 package tests
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -96,4 +97,20 @@ func TestFuncInre(t *testing.T) {
 
 	r4, _ := cache.Client.DecrBy(nil, "test-1", 3)
 	t.Logf("r4.value: %v == 0.", r4.Int64())
+}
+
+
+func TestFuncIncrInt(t *testing.T) {
+
+	r1, _ := cache.Client.Incr(nil, "test-1")
+	t.Logf("r1.value: %v.", r1.Int())
+	t.Logf("r1.value: %v.", r1.Int64())
+
+	x := r1.Int()
+
+	t.Logf("x reflect: %s.", reflect.TypeOf(x).Kind().String())
+
+
+
+
 }
