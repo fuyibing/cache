@@ -66,6 +66,10 @@ type ClientInterface interface {
 // Response of redis command done.
 // Contains read and write command.
 type Response interface {
+
+	//
+	Exist() bool
+
 	// Return value is equal to specified int.
 	EqInt(i int) bool
 
@@ -89,6 +93,9 @@ type Response interface {
 
 	// Return value is "OK" string.
 	IsOk() bool
+
+	// Return redis key name.
+	Key() string
 
 	// Return string for any response.
 	String() string

@@ -46,12 +46,23 @@ func TestFuncExpire(t *testing.T) {
 	if err != nil {
 		t.Errorf("error: %v.", err)
 	} else {
-		t.Logf("type: %v", res.Type())
 		if res.EqInt64(1) {
 			t.Logf("result: Succeed")
 		} else {
 			t.Error("result: Failed")
 		}
+	}
+	time.Sleep(time.Second)
+}
+
+func TestFuncGet(t *testing.T) {
+	res, err := cache.Client.Get(nil, "key:name2")
+	if err != nil {
+		t.Errorf("error: %v.", err)
+	} else {
+		t.Logf("key: %s.", res.Key())
+		t.Logf("found: %v.", res.Exist())
+		t.Logf("succeed: %v", res.String())
 	}
 	time.Sleep(time.Second)
 }
