@@ -60,6 +60,34 @@ func (o *client) SetNxEx(ctx interface{}, key string, value interface{}, seconds
 	return o.do(ctx, "SET", key, value, "NX", "EX", seconds)
 }
 
+// ----------------
+// HASH OPERATE
+// ----------------
+
+func (o *client) HGet(ctx interface{}, key, field string) (Response, error) {
+	return o.Do(ctx, "HGET", key, field)
+}
+
+func (o *client) HGetAll(ctx interface{}, key string) (Response, error) {
+	return o.Do(ctx, "HGETALL", key)
+}
+
+func (o *client) HDecr(ctx interface{}, key, field string) (Response, error) {
+	return o.Do(ctx, "HDECR", key, field)
+}
+
+func (o *client) HDecrBy(ctx interface{}, key, field string, num interface{}) (Response, error) {
+	return o.Do(ctx, "HDECRBY", key, field, num)
+}
+
+func (o *client) HIncr(ctx interface{}, key, field string) (Response, error) {
+	return o.Do(ctx, "HINCR", key, field)
+}
+
+func (o *client) HIncrBy(ctx interface{}, key, field string, num interface{}) (Response, error) {
+	return o.Do(ctx, "HINCRBY", key, field, num)
+}
+
 // Run command.
 func (o *client) Do(ctx interface{}, cmd string, args ...interface{}) (res Response, err error) {
 	return o.do(ctx, cmd, args...)
@@ -70,7 +98,7 @@ func (o *client) do(ctx interface{}, cmd string, args ...interface{}) (res Respo
 	// 1. Panic.
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorfc(ctx, "[cache] fatal error: %v.", r)
+			log.Panicfc(ctx, "[cache] fatal error: %v.", r)
 		}
 	}()
 	// 2. Connection.
@@ -97,6 +125,7 @@ func (o *client) do(ctx interface{}, cmd string, args ...interface{}) (res Respo
 	defer func() {
 		d1 := time.Now().Sub(t1).Seconds()
 		if r := recover(); r != nil {
+			log.Panicfc(ctx, "[cache][d=%f] fatal error: %v.", r)
 			err = errors.New(fmt.Sprintf("%v", r))
 		}
 		if err != nil {
@@ -106,9 +135,15 @@ func (o *client) do(ctx interface{}, cmd string, args ...interface{}) (res Respo
 		}
 	}()
 	// 3.1 Send commend.
-	var v interface{}
-	if v, err = connection.Do(cmd, args...); err == nil {
-		res = &response{v: v}
+	var value interface{}
+	if value, err = connection.Do(cmd, args...); err != nil {
+		return
 	}
+	// 4. response.
+	key := ""
+	if len(args) > 0 {
+		key = fmt.Sprintf("%v", args[0])
+	}
+	res = &response{exist: value != nil, key: key, value: value}
 	return
 }

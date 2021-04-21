@@ -15,15 +15,15 @@
 # [wait]
 # [write-timeout]
 #
-addr: "127.0.0.1:6379"
-database: 0
+addr: "192.168.3.133:6379"
+database: 5
 idle-timeout: 30
 keep-alive: 60
 max-active: 128
 max-idle: 16
 max-lifetime: 60
 network: "tcp"
-password: ""
+password: "uniondrug@123"
 timeout: 0
 read-timeout: 0
 wait: true
