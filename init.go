@@ -29,5 +29,11 @@ func init() {
 		Config = new(configuration)
 		Config.initialize()
 		Client = new(client)
+
+		lockerPool = &sync.Pool{
+			New: func() interface{} {
+				return (&locker{}).init()
+			},
+		}
 	})
 }

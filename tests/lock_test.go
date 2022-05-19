@@ -4,6 +4,8 @@
 package tests
 
 import (
+	"fmt"
+	"runtime"
 	"testing"
 	"time"
 
@@ -13,27 +15,36 @@ import (
 )
 
 func TestLock(t *testing.T) {
+	println("goroutine: ", runtime.NumGoroutine())
 
-	ctx := log.NewContext()
+	for i := 0; i < 1; i++ {
+		testLock(t, i)
+	}
 
-	lock := cache.NewLock("example")
-	// lock.NotRenewal(ctx)
+	time.Sleep(time.Second)
+	println("goroutine: ", runtime.NumGoroutine())
+}
 
-	str, err := lock.Set(ctx)
+func testLock(t *testing.T, n int) {
+
+	c := log.NewContext()
+	x := cache.NewLock(fmt.Sprintf("example:%d", n))
+	str, err := x.Set(c)
 	if err != nil {
 		t.Errorf("lock error: %v", err)
 		return
 	}
 
-	defer lock.Unset(ctx, str)
-
-	if str != "" {
-		t.Logf("lock succeed: ")
-		time.Sleep(time.Second * 30)
+	if str == "" {
 		return
 	}
 
-	t.Errorf("lock fail: ")
+	defer func() {
+		if err2 := x.Unset(c, str); err2 != nil {
+			t.Logf("------------- unset error: %v", err2)
+		}
+	}()
 
-
+	t.Logf("lock succeed: ")
+	time.Sleep(time.Second)
 }
