@@ -1,101 +1,122 @@
 // author: wsfuyibing <websearch@163.com>
-// date: 2021-02-21
+// date: 2022-05-19
 
 package cache
 
 import (
-	"io/ioutil"
-	"sync"
-	"time"
+    "fmt"
+    "os"
 
-	"github.com/fuyibing/log/v2"
-	"github.com/gomodule/redigo/redis"
-	"gopkg.in/yaml.v3"
+    "gopkg.in/yaml.v3"
 )
 
-// Configuration struct.
-type configuration struct {
-	Address      string `yaml:"addr"`
-	Database     int    `yaml:"database"`
-	IdleTimeout  int    `yaml:"idle-timeout"`
-	KeepAlive    int    `yaml:"keep-alive"`
-	MaxActive    int    `yaml:"max-active"`
-	MaxIdle      int    `yaml:"max-idle"`
-	MaxLifetime  int    `yaml:"max-lifetime"`
-	Network      string `yaml:"network"`
-	Password     string `yaml:"password"`
-	ReadTimeout  int    `yaml:"read-timeout"`
-	Timeout      int    `yaml:"timeout"`
-	Wait         bool   `yaml:"wait"`
-	WriteTimeout int    `yaml:"write-timeout"`
-	mutex        *sync.RWMutex
-	pool         *redis.Pool
+const (
+    defaultLockerLifetime       = 30
+    defaultLockerPrefix         = "LOCK"
+    defaultLockerRenewalSeconds = 5
+    defaultLockerRenewalTimeout = 3600
+
+    defaultMaxIdle         = 5
+    defaultMaxActive       = 50
+    defaultIdleTimeout     = 60
+    defaultMaxConnLifetime = 60
+
+    defaultConnectTimeout = 10
+    defaultReadTimeout    = 5
+    defaultWriteTimeout   = 5
+)
+
+// Config
+// 配置实例.
+var Config *Configuration
+
+// Configuration
+// 配置参数.
+type Configuration struct {
+    Network  string `yaml:"network"`
+    Address  string `yaml:"address"`
+    Database int    `yaml:"database"`
+    Password string `yaml:"password"`
+
+    ConnectTimeout int `yaml:"connect-timeout"`
+    ReadTimeout    int `yaml:"read-timeout"`
+    WriteTimeout   int `yaml:"write-timeout"`
+
+    MaxIdle         int  `yaml:"max-idle"`
+    MaxActive       int  `yaml:"max-active"`
+    IdleTimeout     int  `yaml:"idle-timeout"`
+    Wait            bool `yaml:"wait"`
+    MaxConnLifetime int  `yaml:"max-conn-lifetime"`
+
+    LockerLifetime       int    `yaml:"locker-lifetime"`
+    LockerPrefix         string `yaml:"locker-prefix"`
+    LockerRenewalSeconds int    `yaml:"locker-renewal-seconds"`
+    LockerRenewalTimeout int    `yaml:"locker-renewal-timeout"`
 }
 
-// Load configuration from specified yaml file.
-func (o *configuration) LoadYaml(file string) error {
-	// 1. read file content.
-	body, err := ioutil.ReadFile(file)
-	if err != nil {
-		return err
-	}
-	// 2. assign parsed to instance.
-	if err = yaml.Unmarshal(body, o); err != nil {
-		return err
-	}
-	// 3.reset.
-	log.Debugf("parse configuration from %s.", file)
-	o.reset()
-	return nil
+// 赋值.
+// 从YAML文件加载配置后, 未设置项赋默认值.
+func (o *Configuration) defaults() {
+    if o.MaxIdle < 1 {
+        o.MaxIdle = defaultMaxIdle
+    }
+    if o.MaxActive < 1 {
+        o.MaxActive = defaultMaxActive
+    }
+    if o.IdleTimeout < 1 {
+        o.IdleTimeout = defaultIdleTimeout
+    }
+    if o.MaxConnLifetime < 1 {
+        o.MaxConnLifetime = defaultMaxConnLifetime
+    }
+
+    if o.ConnectTimeout < 1 {
+        o.ConnectTimeout = defaultConnectTimeout
+    }
+    if o.ReadTimeout < 1 {
+        o.ReadTimeout = defaultReadTimeout
+    }
+    if o.WriteTimeout < 1 {
+        o.WriteTimeout = defaultWriteTimeout
+    }
+
+    if o.LockerLifetime < 1 {
+        o.LockerLifetime = defaultLockerLifetime
+    }
+    if o.LockerPrefix == "" {
+        o.LockerPrefix = defaultLockerPrefix
+    }
+    if o.LockerRenewalSeconds < 1 {
+        o.LockerRenewalSeconds = defaultLockerRenewalSeconds
+    }
+    if o.LockerRenewalTimeout < 1 {
+        o.LockerRenewalTimeout = defaultLockerRenewalTimeout
+    }
+
+    fmt.Printf("config: %+v\n", o)
 }
 
-// Return connection pool.
-func (o *configuration) Pool() *redis.Pool { return o.pool }
-
-// Initialize default configuration.
-func (o *configuration) initialize() {
-	o.mutex = new(sync.RWMutex)
-	for _, file := range []string{"./tmp/cache.yaml", "./config/cache.yaml", "../config/cache.yaml"} {
-		if nil == o.LoadYaml(file) {
-			break
-		}
-	}
+// 构造.
+func (o *Configuration) init() *Configuration {
+    o.load()
+    o.defaults()
+    return o
 }
 
-// Reset connection settings.
-func (o *configuration) reset() {
-	o.pool = &redis.Pool{MaxActive: o.MaxActive, MaxIdle: o.MaxIdle, Wait: o.Wait}
-	// lifetime
-	if o.MaxLifetime > 0 {
-		o.pool.MaxConnLifetime = time.Duration(o.MaxLifetime) * time.Second
-	}
-	// timeout: idle
-	if o.IdleTimeout > 0 {
-		o.pool.IdleTimeout = time.Duration(o.IdleTimeout) * time.Second
-	}
-	// Connect
-	o.pool.Dial = func() (redis.Conn, error) {
-		// options: default.
-		opts := make([]redis.DialOption, 0)
-		opts = append(opts, redis.DialPassword(o.Password), redis.DialDatabase(o.Database))
-		// options: timeouts.
-		//          connect
-		//          read
-		//          write
-		if o.Timeout > 0 {
-			opts = append(opts, redis.DialConnectTimeout(time.Duration(o.Timeout)*time.Second))
-		}
-		if o.ReadTimeout > 0 {
-			opts = append(opts, redis.DialReadTimeout(time.Duration(o.ReadTimeout)*time.Second))
-		}
-		if o.WriteTimeout > 0 {
-			opts = append(opts, redis.DialWriteTimeout(time.Duration(o.WriteTimeout)*time.Second))
-		}
-		// options: keep alive
-		if o.KeepAlive > 0 {
-			opts = append(opts, redis.DialKeepAlive(time.Duration(o.KeepAlive)*time.Second))
-		}
-		// create connection
-		return redis.Dial(o.Network, o.Address, opts...)
-	}
+// 加载.
+// 从YAML文件中加载配置参数.
+func (o *Configuration) load() {
+    for _, file := range []string{
+        "../tmp/cache.yaml",
+        "../config/cache.yaml",
+        "./tmp/cache.yaml",
+        "./config/cache.yaml",
+    } {
+        body, err := os.ReadFile(file)
+        if err == nil {
+            if err = yaml.Unmarshal(body, o); err == nil {
+                break
+            }
+        }
+    }
 }

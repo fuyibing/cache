@@ -1,4 +1,4 @@
-module github.com/fuyibing/cache
+module github.com/fuyibing/cache/v2
 
 go 1.13
 
