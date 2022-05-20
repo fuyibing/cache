@@ -1,27 +1,7 @@
 #
 # package: github.com/fuyibing/cache
 #
-# [addr]
-# [database]
-# [idle-timeout] 连结空闲指定时长后关闭
-# [keep-alive] 长连接保持时长.
-# [max-active] 最大连接数.
-# [max-idle] 最大空闲连接数.
-# [max-lifetime] 最大空闲连接数.
-# [network]
-# [password]
-# [timeout]
-# [read-timeout]
-# [wait]
-# [write-timeout]
-#
 network: "tcp"
 address: "192.168.3.133:6379"
 database: 5
 password: "uniondrug@123"
-
-keep-alive: 60
-
-connect-timeout: 5
-read-timeout: 3
-write-timeout: 3
